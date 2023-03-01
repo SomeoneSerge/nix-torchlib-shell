@@ -1,0 +1,38 @@
+name: Build
+
+on: 
+  schedule:
+    - cron: "13 11 * * 0" # Weekly
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2.4.0
+        with:
+          submodules: recursive
+      - name: Install nix
+        uses: cachix/install-nix-action@v19
+        with:
+          # Pin just something so nix-shell doesn't give warnings
+          nix_path: "nixpkgs=https://github.com/nixos/nixpkgs/archive/7f9b6e2babf232412682c09e57ed666d8f84ac2d.tar.gz"
+          install_url: https://releases.nixos.org/nix/nix-2.13.2/install
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Setup cachix
+        uses: cachix/cachix-action@v12
+        with:
+          name: cuda-maintainers
+      - name: Fetch dependencies
+        run: nix-shell shell.nix --command "echo Cache is hot!"
+      - name: Configure and Build
+        run: |
+          nix-shell --command "cmake -B build/ -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_INSTALL_RPATH=/run/opengl-driver/lib"
+          nix-shell --command "cmake --build build/"
