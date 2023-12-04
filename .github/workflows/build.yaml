@@ -27,7 +27,7 @@ jobs:
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
       - name: Setup cachix
-        uses: cachix/cachix-action@v12
+        uses: cachix/cachix-action@v13
         with:
           name: cuda-maintainers
       - name: Fetch dependencies
